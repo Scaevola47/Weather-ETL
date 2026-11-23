@@ -1,23 +1,35 @@
-from sqlalchemy import create_engine
+import logging
 import pandas as pd
 from extract import extract_weather
 from load import load
 from transform import transform_weather
 
+logging.basicConfig(
+    level=logging.INFO,
+    format='%(asctime)s %(levelname)s %(name)s: %(message)s',
+)
+
+logger = logging.getLogger(__name__)
+CITIES = ['Slupsk', 'Warsaw', 'Gdansk', 'Szczecin']
+
 def start():
-    try:
-        print('Starting pipline')
+    for city in CITIES:
+        try:
+            logger.info('Starting pipline')
+            weather_df = extract_weather(city)
+            
+            logger.info('Transforming data')
+            weather_df = transform_weather(weather_df, city)
 
-        weather_df = extract_weather()
-        print('Starting transformation')
+            logger.info('Loading data')
+            load(weather_df, 'weather')
 
-        weather_df = transform_weather(weather_df)
-        load(weather_df, 'weather')
+            logger.info('ETL pipline done')
 
-        print('ETL pipline done')
-
-    except:
-        print('Pipline Failed')
+        except:
+            logger.exception('Pipline failed')
+            print('Pipline Failed')
+            raise
 
 if __name__ == '__main__':
     start()
